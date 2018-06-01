@@ -31,17 +31,13 @@ const services =  {
 // eslint-disable-next-line no-unused-vars
 const createNavigation = update => {
   const stateNavigator = new Navigation.StateNavigator([
-    { key: 'home', route: '' },
-    { key: 'coffee' },
-    { key: 'beer' },
-    { key: 'beerDetails', tab: 'beer' },
+    { key: 'home', route: '' , component: createHome(update) },
+    { key: 'coffee', component: createCoffee(update) },
+    { key: 'beer', component: createBeer(update) },
+    { key: 'beerDetails', component: createBeerDetails(update), tab: 'beer' },
   ]);
 
-  const { home, coffee, beer, beerDetails } = stateNavigator.states;
-  home.component = createHome(update, stateNavigator);
-  coffee.component = createCoffee(update, stateNavigator);
-  beer.component = createBeer(update, stateNavigator);
-  beerDetails.component = createBeerDetails(update, stateNavigator);
+  const { coffee, beer } = stateNavigator.states;
 
   beer.navigating = (data, url, navigate) => {
     services.loadBeer().then(beerList => {
