@@ -63,8 +63,11 @@ const createNavigation = update => {
   }
 
   stateNavigator.onNavigate(() => {
+    const immutableNavigator = new Navigation.StateNavigator(stateNavigator);
+    immutableNavigator.stateContext = stateNavigator.stateContext;
+    immutableNavigator.navigateLink = stateNavigator.navigateLink.bind(stateNavigator);
     const { data, asyncData, url } = stateNavigator.stateContext;
-    update(model => Object.assign(model, data, asyncData, { url }))
+    update(model => Object.assign(model, data, asyncData, { stateNavigator: immutableNavigator }))
   });
 
   stateNavigator.start();

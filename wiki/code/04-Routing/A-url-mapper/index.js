@@ -14,5 +14,5 @@ models.map(model => ReactDOM.render(app.view(model), element));
 models.map(contextSync);
 
 // Only for using Meiosis Tracer in development.
-meiosis.trace({ update, dataStreams: [ models ] });
-meiosisTracer({ selector: "#tracer" });
+//meiosis.trace({ update, dataStreams: [ models ] });
+//meiosisTracer({ selector: "#tracer" });
