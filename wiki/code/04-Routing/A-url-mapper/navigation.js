@@ -68,13 +68,9 @@ const createNavigation = update => {
 
   stateNavigator.start();
 
-  const contextSync = ({ url }) => {
-    if (url !== undefined && stateNavigator.stateContext.url !== url) {
-      const { state, data } = stateNavigator.parseLink(url);
-      stateNavigator.stateContext.url = url;
-      stateNavigator.stateContext.state = state;
-      stateNavigator.stateContext.data = data;
-      stateNavigator.historyManager.addHistory(url, false);
+  const contextSync = ({ stateNavigator: immutableNavigator }) => {
+    if (immutableNavigator && stateNavigator.stateContext !== immutableNavigator.stateContext) {
+      stateNavigator.historyManager.addHistory(immutableNavigator.stateContext.url, false);
     }
   };
 
