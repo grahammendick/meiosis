@@ -1,27 +1,27 @@
 /* global pages */
 
-const createBeerDetails = (update, stateNavigator) => ({
+const createBeerDetails = update => ({
   view: model => (<p>Details of beer {model.id}</p>)
 });
 
-const createBeer = (update, stateNavigator) => {
+const createBeer = update => {
   const actions = {
-    beerDetails: id => _evt => stateNavigator.navigate("beerDetails", { id }),
+    beerDetails: (id, stateNavigator) => _evt => stateNavigator.navigate("beerDetails", { id }),
   };
 
   return {
-    view: model => (
+    view: ({ beerList, stateNavigator }) => (
       <div>
         <p>Beer Page</p>
         <ul>
-          {model.beerList.map(beer =>
+          {beerList.map(beer =>
             <li key={beer.id}>
               <a href={`#${stateNavigator.getNavigationLink("beerDetails", { id: beer.id })}`}>
                 {beer.title}
               </a>
               {" "}
               <button className="btn btn-default btn-xs"
-                onClick={actions.beerDetails(beer.id)}>
+                onClick={actions.beerDetails(beer.id, stateNavigator)}>
                 {beer.title}
               </button>
             </li>
@@ -32,17 +32,17 @@ const createBeer = (update, stateNavigator) => {
   };
 };
 
-const createCoffee = (update, stateNavigator) => ({
-  view: model => (
+const createCoffee = update => ({
+  view: ({ coffees, coffee, stateNavigator }) => (
     <div>
       <p>Coffee Page</p>
-      {model.coffees.map(coffee => <span key={coffee.id}>
+      {coffees.map(coffee => <span key={coffee.id}>
         <a href={`#${stateNavigator.getRefreshLink({ id: coffee.id })}`}>
           {coffee.id}
         </a>
         {" "}
       </span>)}
-      {model.coffee}
+      {coffee}
     </div>
   )
 });
@@ -52,10 +52,11 @@ const createHome = _update => ({
 });
 
 // eslint-disable-next-line no-unused-vars
-const createApp = (update, stateNavigator) => {
+const createApp = update => {
   return {
-    view: model => {
-      var state = stateNavigator.stateContext.state;
+    view: (model) => {
+      var stateNavigator = model && model.stateNavigator;
+      var state = stateNavigator && stateNavigator.stateContext.state;
       if (!state) return null;
       const isActive = tab => tab === (state.tab || state.key) ? "active" : "";
       return (
