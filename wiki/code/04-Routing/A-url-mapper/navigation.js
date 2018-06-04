@@ -59,11 +59,8 @@ const createNavigation = update => {
   }
 
   stateNavigator.onNavigate(() => {
-    var inertHistoryManager = new Navigation.HTML5HistoryManager();
-    inertHistoryManager.init = () => {};
-    const immutableNavigator = new Navigation.StateNavigator(stateNavigator, inertHistoryManager);
+    const immutableNavigator = new Navigation.StateNavigator(stateNavigator, stateNavigator.historyManager);
     immutableNavigator.stateContext = stateNavigator.stateContext;
-    immutableNavigator.historyManager = stateNavigator.historyManager;
     immutableNavigator.navigateLink = stateNavigator.navigateLink.bind(stateNavigator);
     const { data, asyncData } = stateNavigator.stateContext;
     update(model => Object.assign(model, data, asyncData, { stateNavigator: immutableNavigator }))

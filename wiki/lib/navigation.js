@@ -203,13 +203,14 @@ function createFluentNavigator(states, stateHandler, stateContext) {
 var HashHistoryManager =  (function () {
     function HashHistoryManager(replaceQueryIdentifier) {
         if (replaceQueryIdentifier === void 0) { replaceQueryIdentifier = false; }
+        this.navigateHistory = null;
         this.replaceQueryIdentifier = false;
         this.disabled = (typeof window === 'undefined') || !('onhashchange' in window);
         this.replaceQueryIdentifier = replaceQueryIdentifier;
     }
     HashHistoryManager.prototype.init = function (navigateHistory) {
-        this.navigateHistory = function () { return navigateHistory(); };
-        if (!this.disabled) {
+        if (!this.disabled && !this.navigateHistory) {
+            this.navigateHistory = function () { return navigateHistory(); };
             if (window.addEventListener)
                 window.addEventListener('hashchange', this.navigateHistory);
             else
@@ -237,12 +238,13 @@ var HashHistoryManager =  (function () {
         return this.decode(hrefElement.hash.substring(1));
     };
     HashHistoryManager.prototype.stop = function () {
-        if (!this.disabled) {
+        if (this.navigateHistory) {
             if (window.removeEventListener)
                 window.removeEventListener('hashchange', this.navigateHistory);
             else
                 window['detachEvent']('onhashchange', this.navigateHistory);
         }
+        this.navigateHistory = null;
     };
     HashHistoryManager.prototype.encode = function (url) {
         if (!this.replaceQueryIdentifier)
@@ -288,14 +290,14 @@ var ArrayConverter =  (function (_super) {
                     if (vals[i].length !== 0)
                         arr.push(this.converter.convertFrom(vals[i].replace(/0-/g, '-')));
                     else
-                        throw Error('\'\' is not a valid array item');
+                        throw new Error('Empty string is not a valid array item');
                 }
             }
             else {
                 if (val.length !== 0)
                     arr.push(this.converter.convertFrom(val));
                 else
-                    throw Error('\'\' is not a valid array item');
+                    throw new Error('Empty string is not a valid array item');
             }
         }
         else {
@@ -303,7 +305,7 @@ var ArrayConverter =  (function (_super) {
                 if (val[i].length !== 0)
                     arr.push(this.converter.convertFrom(val[i]));
                 else
-                    throw Error('\'\' is not a valid array item');
+                    throw new Error('Empty string is not a valid array item');
             }
         }
         return arr;
@@ -318,7 +320,7 @@ var ArrayConverter =  (function (_super) {
                 vals.push(convertedValue.replace(/-/g, '0-'));
             }
             else {
-                throw Error('Invalid navigation data, arrays cannnot contain null, undefined or empty string');
+                throw new Error('Invalid navigation data, arrays cannnot contain null, undefined or empty string');
             }
         }
         return { val: vals.join(ArrayConverter.SEPARATOR), arrayVal: arr };
@@ -334,7 +336,7 @@ var BooleanConverter =  (function (_super) {
     }
     BooleanConverter.prototype.convertFrom = function (val) {
         if (val !== 'true' && val !== 'false')
-            throw Error(val + ' is not a valid boolean');
+            throw new Error(val + ' is not a valid boolean');
         return val === 'true';
     };
     BooleanConverter.prototype.convertTo = function (val) {
@@ -351,10 +353,10 @@ var DateConverter =  (function (_super) {
     DateConverter.prototype.convertFrom = function (val) {
         var dateParts = val.split('-');
         if (dateParts.length !== 3)
-            throw Error(val + ' is not a valid date');
+            throw new Error(val + ' is not a valid date');
         var date = new Date(+dateParts[0], +dateParts[1] - 1, +dateParts[2]);
         if (isNaN(+date))
-            throw Error(val + ' is not a valid date');
+            throw new Error(val + ' is not a valid date');
         return date;
     };
     DateConverter.prototype.convertTo = function (val) {
@@ -373,7 +375,7 @@ var NumberConverter =  (function (_super) {
     }
     NumberConverter.prototype.convertFrom = function (val) {
         if (isNaN(+val))
-            throw Error(val + ' is not a valid number');
+            throw new Error(val + ' is not a valid number');
         return +val;
     };
     NumberConverter.prototype.convertTo = function (val) {
@@ -389,7 +391,7 @@ var StringConverter =  (function (_super) {
     }
     StringConverter.prototype.convertFrom = function (val) {
         if (typeof val !== 'string')
-            throw Error(val + ' is not a valid string');
+            throw new Error(val + ' is not a valid string');
         return val;
     };
     StringConverter.prototype.convertTo = function (val) {
@@ -1168,8 +1170,7 @@ var StateNavigator =  (function () {
         if (history && this.stateContext.url === url)
             return;
         var oldUrl = this.stateContext.url;
-        var _a = this.stateHandler.parseLink(url), state = _a.state, data = _a.data;
-        var _b = state.crumbTrailKey, crumbs = data[_b], data = __rest(data, [typeof _b === "symbol" ? _b : _b + ""]);
+        var _a = this.parseLink(url), state = _a.state, data = _a.data, crumbs = _a.crumbs;
         for (var id in this.onBeforeNavigateCache.handlers) {
             var handler = this.onBeforeNavigateCache.handlers[id];
             if (oldUrl !== this.stateContext.url || !handler(state, data, url, history, this.stateContext))
@@ -1212,8 +1213,8 @@ var StateNavigator =  (function () {
     };
     StateNavigator.prototype.parseLink = function (url) {
         var _a = this.stateHandler.parseLink(url), state = _a.state, data = _a.data;
-        delete data[state.crumbTrailKey];
-        return { state: state, data: data };
+        var _b = state.crumbTrailKey, crumbs = data[_b], data = __rest(data, [typeof _b === "symbol" ? _b : _b + ""]);
+        return { state: state, data: data, crumbs: crumbs };
     };
     StateNavigator.prototype.fluent = function (withContext) {
         if (withContext === void 0) { withContext = false; }
@@ -1230,13 +1231,14 @@ var StateNavigator =  (function () {
 var HTML5HistoryManager =  (function () {
     function HTML5HistoryManager(applicationPath) {
         if (applicationPath === void 0) { applicationPath = ''; }
+        this.navigateHistory = null;
         this.applicationPath = '';
         this.disabled = (typeof window === 'undefined') || !(window.history && window.history.pushState);
         this.applicationPath = HTML5HistoryManager.prependSlash(applicationPath);
     }
     HTML5HistoryManager.prototype.init = function (navigateHistory) {
-        this.navigateHistory = function (e) { return navigateHistory(e.state || undefined); };
-        if (!this.disabled) {
+        if (!this.disabled && !this.navigateHistory) {
+            this.navigateHistory = function (e) { return navigateHistory(e.state || undefined); };
             window.addEventListener('popstate', this.navigateHistory);
         }
     };
@@ -1261,8 +1263,9 @@ var HTML5HistoryManager =  (function () {
         return hrefElement.pathname.substring(this.applicationPath.length) + hrefElement.search;
     };
     HTML5HistoryManager.prototype.stop = function () {
-        if (!this.disabled)
+        if (this.navigateHistory)
             window.removeEventListener('popstate', this.navigateHistory);
+        this.navigateHistory = null;
     };
     HTML5HistoryManager.prependSlash = function (url) {
         return (url && url.substring(0, 1) !== '/') ? '/' + url : url;
